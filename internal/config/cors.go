@@ -17,7 +17,7 @@ func SetupCORS(viper *viper.Viper) gin.HandlerFunc {
 	return cors.New(cors.Config{
 		AllowOrigins:     allowOrigins,
 		AllowMethods:     []string{"GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS", "HEAD"},
-		AllowHeaders:     []string{"Origin", "Authorization", "Content-Type", "Accept", "X-Requested-With", "Access-Control-Request-Method", "Access-Control-Request-Headers", "X-CSRF-Token"},
+		AllowHeaders:     []string{"Origin", "Authorization", "Content-Type", "Accept", "X-Requested-With", "Access-Control-Request-Method", "Access-Control-Request-Headers", "X-CSRF-Token", "X-Request-ID"},
 		ExposeHeaders:    []string{"Content-Length", "Content-Type", "X-Requested-With", "X-CSRF-Token", "Authorization"},
 		AllowCredentials: true,
 		MaxAge:           24 * time.Hour,
