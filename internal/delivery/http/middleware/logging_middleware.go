@@ -42,6 +42,8 @@ func LoggingMiddleware(logger *logrus.Logger, logUC *usecase.LogUsecase) gin.Han
 			userID = auth.ID.String()
 		}
 
+		message := "Request to " + path
+
 		if userID != "" {
 			if reqIDStr, ok := reqID.(string); ok {
 				go func(ctx context.Context, userID, path, reqID string, status int, errStr string) {
@@ -51,7 +53,7 @@ func LoggingMiddleware(logger *logrus.Logger, logUC *usecase.LogUsecase) gin.Han
 					} else if status >= 400 {
 						level = "WARN"
 					}
-					if err := logUC.LogActivity(context.Background(), level, reqID, "Request processed", userID, path, status, errStr); err != nil {
+					if err := logUC.LogActivity(context.Background(), level, reqID, message, userID, path, status, errStr); err != nil {
 						logger.WithError(err).Warn("Failed to log activity to MongoDB")
 					}
 				}(c.Request.Context(), userID, path, reqIDStr, c.Writer.Status(), c.Errors.ByType(gin.ErrorTypePrivate).String())
@@ -61,11 +63,11 @@ func LoggingMiddleware(logger *logrus.Logger, logUC *usecase.LogUsecase) gin.Han
 		entry := logger.WithFields(fields)
 		switch {
 		case c.Writer.Status() >= 500:
-			entry.Error("Request processed")
+			entry.Error(message)
 		case c.Writer.Status() >= 400:
-			entry.Warn("Request processed")
+			entry.Warn(message)
 		default:
-			entry.Info("Request processed")
+			entry.Info(message)
 		}
 	}
 }

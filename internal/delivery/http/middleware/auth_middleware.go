@@ -1,6 +1,7 @@
 package middleware
 
 import (
+	"encoding/json"
 	"golectro-user/internal/constants"
 	"golectro-user/internal/model"
 	"golectro-user/internal/usecase"
@@ -79,6 +80,14 @@ func NewAuth(userUseCase *usecase.UserUseCase, viper *viper.Viper) gin.HandlerFu
 			}
 		}
 
+		rolesJSON, err := json.Marshal(roles)
+		if err != nil {
+			userUseCase.Log.Errorf("Failed to marshal roles: %v", err)
+			res := utils.FailedResponse(ctx, http.StatusInternalServerError, constants.InternalServerError, nil)
+			ctx.AbortWithStatusJSON(res.StatusCode, res)
+			return
+		}
+
 		username, _ := claims["preferred_username"].(string)
 		email, _ := claims["email"].(string)
 
@@ -86,7 +95,7 @@ func NewAuth(userUseCase *usecase.UserUseCase, viper *viper.Viper) gin.HandlerFu
 			ID:       uid,
 			Username: username,
 			Email:    email,
-			Roles:    roles,
+			Roles:    rolesJSON,
 		}
 
 		ctx.Set("auth", auth)
