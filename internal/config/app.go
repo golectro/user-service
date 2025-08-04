@@ -1,7 +1,11 @@
 package config
 
 import (
+	"golectro-user/internal/delivery/http"
+	"golectro-user/internal/delivery/http/middleware"
 	"golectro-user/internal/delivery/http/route"
+	"golectro-user/internal/repository"
+	"golectro-user/internal/usecase"
 
 	"github.com/elastic/go-elasticsearch/v8"
 	"github.com/gin-gonic/gin"
@@ -29,9 +33,18 @@ type BootstrapConfig struct {
 }
 
 func Bootstrap(config *BootstrapConfig) {
+	userRepository := repository.NewUserRepository(config.Log)
+
+	userUseCase := usecase.NewUserUsecase(config.DB, config.Log, config.Validate, userRepository)
+
+	userController := http.NewUserController(userUseCase, config.Log)
+
+	authMiddleware := middleware.NewAuth(userUseCase, config.Viper)
 
 	routeConfig := route.RouteConfig{
-		App:               config.App,
+		App:            config.App,
+		UserController: userController,
+		AuthMiddleware: authMiddleware,
 	}
 	routeConfig.Setup()
 }
