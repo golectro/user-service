@@ -1,8 +1,11 @@
 package http
 
 import (
+	"golectro-user/internal/constants"
 	"golectro-user/internal/delivery/http/middleware"
 	"golectro-user/internal/usecase"
+	"golectro-user/internal/utils"
+	"net/http"
 
 	"github.com/gin-gonic/gin"
 	"github.com/sirupsen/logrus"
@@ -23,13 +26,14 @@ func NewUserController(useCase *usecase.UserUseCase, log *logrus.Logger) *UserCo
 func (c *UserController) SyncUser(ctx *gin.Context) {
 	auth := middleware.GetUser(ctx)
 
-	ctx.JSON(200, gin.H{
-		"message": "User synced successfully",
-		"user": gin.H{
-			"id":       auth.ID,
-			"email":    auth.Email,
-			"username": auth.Username,
-			"roles":    auth.Roles,
-		},
-	})
+	result, err := c.UseCase.Sync(ctx, auth)
+	if err != nil {
+		c.Log.WithError(err).Error("Failed to sync user")
+		res := utils.FailedResponse(ctx, http.StatusBadRequest, constants.FailedSyncUser, err)
+		ctx.AbortWithStatusJSON(res.StatusCode, res)
+		return
+	}
+
+	res := utils.SuccessResponse(ctx, http.StatusCreated, constants.UserSynced, result)
+	ctx.JSON(res.StatusCode, res)
 }

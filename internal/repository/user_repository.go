@@ -20,6 +20,35 @@ func NewUserRepository(log *logrus.Logger) *UserRepository {
 	}
 }
 
+func (r *UserRepository) Sync(db *gorm.DB, user *entity.User) error {
+	if user.ID == uuid.Nil {
+		r.Log.Error("User ID is nil")
+		return errors.New("user ID cannot be nil")
+	}
+
+	existingUser, err := r.FindByID(db, user.ID)
+	if err != nil {
+		r.Log.WithError(err).Error("Failed to find user by ID")
+		return err
+	}
+
+	if existingUser == nil {
+		if err := r.Create(db, user); err != nil {
+			r.Log.WithError(err).Error("Failed to create new user")
+			return err
+		}
+	} else {
+		user.CreatedAt = existingUser.CreatedAt
+
+		if err := r.Update(db, user); err != nil {
+			r.Log.WithError(err).Error("Failed to update existing user")
+			return err
+		}
+	}
+
+	return nil
+}
+
 func (r *UserRepository) FindByEmail(db *gorm.DB, email string) (*entity.User, error) {
 	var user entity.User
 	err := db.Where("email = ?", email).First(&user).Error
