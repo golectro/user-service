@@ -34,17 +34,21 @@ type BootstrapConfig struct {
 
 func Bootstrap(config *BootstrapConfig) {
 	userRepository := repository.NewUserRepository(config.Log)
+	addressRepository := repository.NewAddressRepository(config.Log)
 
 	userUseCase := usecase.NewUserUsecase(config.DB, config.Log, config.Validate, userRepository)
+	addressUseCase := usecase.NewAddressUsecase(config.DB, config.Log, config.Validate, addressRepository)
 
 	userController := http.NewUserController(userUseCase, config.Log)
+	addressController := http.NewAddressController(addressUseCase, config.Log)
 
 	authMiddleware := middleware.NewAuth(userUseCase, config.Viper)
 
 	routeConfig := route.RouteConfig{
-		App:            config.App,
-		UserController: userController,
-		AuthMiddleware: authMiddleware,
+		App:               config.App,
+		UserController:    userController,
+		AddressController: addressController,
+		AuthMiddleware:    authMiddleware,
 	}
 	routeConfig.Setup()
 }

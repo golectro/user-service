@@ -7,9 +7,10 @@ import (
 )
 
 type RouteConfig struct {
-	App            *gin.Engine
-	AuthMiddleware gin.HandlerFunc
-	UserController *http.UserController
+	App               *gin.Engine
+	AuthMiddleware    gin.HandlerFunc
+	UserController    *http.UserController
+	AddressController *http.AddressController
 }
 
 func (c *RouteConfig) Setup() {
@@ -17,4 +18,5 @@ func (c *RouteConfig) Setup() {
 
 	c.RegisterUserRoutes(api)
 	c.RegisterCommonRoutes(c.App)
+	c.RegisterAddressRoutes(api)
 }
