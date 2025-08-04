@@ -1,0 +1,8 @@
+[
+  {
+    "id": "044842ba-67ea-4bcc-8e45-c2937c37b3f6",
+    "email": "john@mail.com",
+    "username": "john",
+    "roles": ["admin"]
+  }
+]
