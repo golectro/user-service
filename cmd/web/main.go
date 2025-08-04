@@ -30,6 +30,8 @@ func main() {
 		return
 	}
 
+	go config.StartGRPC(viper, db, validate, log)
+
 	webPort := viper.GetInt("PORT")
 	err := app.Run(fmt.Sprintf(":%d", webPort))
 	if err != nil {
