@@ -36,12 +36,11 @@ func LoggingMiddleware(logger *logrus.Logger, logUC *usecase.LogUsecase) gin.Han
 			fields["headers"] = c.Request.Header
 		}
 
-		// auth := GetUser(c)
-		// var userID string
-		// if auth != nil {
-		// 	userID = auth.ID.String()
-		// }
-		userID := "123e4567-e89b-12d3-a456-426614174000" // Hardcoded UUID
+		auth := GetUser(c)
+		var userID string
+		if auth != nil {
+			userID = auth.ID.String()
+		}
 
 		if userID != "" {
 			if reqIDStr, ok := reqID.(string); ok {
