@@ -19,4 +19,5 @@ func (c *RouteConfig) RegisterUserRoutes(rg *gin.RouterGroup, minioClient *minio
 	}), c.UserController.UploadAvatar)
 
 	user.GET("/avatar/download", c.AuthMiddleware, c.UserController.DownloadAvatar)
+	user.GET("/avatar/preview", c.AuthMiddleware, c.UserController.PreviewAvatar)
 }

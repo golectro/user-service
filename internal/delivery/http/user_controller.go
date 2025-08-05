@@ -1,12 +1,15 @@
 package http
 
 import (
+	"fmt"
 	"golectro-user/internal/constants"
 	"golectro-user/internal/delivery/http/middleware"
 	"golectro-user/internal/model"
 	"golectro-user/internal/usecase"
 	"golectro-user/internal/utils"
+	"io"
 	"net/http"
+	"path"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -94,4 +97,51 @@ func (uc *UserController) DownloadAvatar(ctx *gin.Context) {
 
 	res := utils.SuccessResponse(ctx, http.StatusOK, constants.AvatarDownloaded, gin.H{"url": avatarURL})
 	ctx.JSON(res.StatusCode, res)
+}
+
+func (uc *UserController) PreviewAvatar(ctx *gin.Context) {
+	auth := middleware.GetUser(ctx)
+
+	result, err := uc.UserUseCase.FindUserByID(ctx, auth.ID)
+	if err != nil {
+		uc.Log.WithError(err).Error("Failed to find user by ID")
+		res := utils.FailedResponse(ctx, http.StatusInternalServerError, constants.FailedFindUserByID, err)
+		ctx.AbortWithStatusJSON(res.StatusCode, res)
+		return
+	}
+
+	if result.AvatarObject == "" {
+		uc.Log.Error("User avatar not found")
+		res := utils.FailedResponse(ctx, http.StatusNotFound, constants.UserNotFound, nil)
+		ctx.AbortWithStatusJSON(res.StatusCode, res)
+		return
+	}
+
+	object, err := uc.MinioUseCase.GetObject(ctx, uc.Viper.GetString("MINIO_BUCKET_AVATAR"), result.AvatarObject)
+	if err != nil {
+		uc.Log.WithError(err).Error("Failed to get object from Minio")
+		res := utils.FailedResponse(ctx, http.StatusInternalServerError, constants.FailedGetPresignedURL, err)
+		ctx.AbortWithStatusJSON(res.StatusCode, res)
+		return
+	}
+	defer object.Close()
+
+	info, err := object.Stat()
+	if err != nil {
+		uc.Log.WithError(err).Error("Failed to get object info from Minio")
+		res := utils.FailedResponse(ctx, http.StatusInternalServerError, constants.FailedGetPresignedURL, err)
+		ctx.AbortWithStatusJSON(res.StatusCode, res)
+		return
+	}
+
+	ctx.Header("Content-Type", info.ContentType)
+	ctx.Header("Content-Length", fmt.Sprintf("%d", info.Size))
+	ctx.Header("Content-Disposition", fmt.Sprintf("inline; filename=\"%s\"", path.Base(result.AvatarObject)))
+
+	_, err = io.Copy(ctx.Writer, object)
+	if err != nil {
+		uc.Log.WithError(err).Error("Failed to write object to response")
+		ctx.AbortWithStatus(http.StatusInternalServerError)
+		return
+	}
 }

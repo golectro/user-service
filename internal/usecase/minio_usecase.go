@@ -7,6 +7,7 @@ import (
 	"golectro-user/internal/utils"
 
 	"github.com/go-playground/validator/v10"
+	"github.com/minio/minio-go/v7"
 	"github.com/sirupsen/logrus"
 )
 
@@ -43,4 +44,8 @@ func (u *MinioUseCase) GetPresignedURL(ctx context.Context, input model.Presigne
 
 func (u *MinioUseCase) Delete(ctx context.Context, bucket, objectKey string) error {
 	return u.Repo.DeleteFile(ctx, bucket, objectKey)
+}
+
+func (u *MinioUseCase) GetObject(ctx context.Context, bucket, objectKey string) (*minio.Object, error) {
+	return u.Repo.GetObject(ctx, bucket, objectKey)
 }
