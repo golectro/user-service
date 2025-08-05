@@ -11,6 +11,10 @@ var (
 		"en": "Avatar uploaded successfully",
 		"id": "Avatar berhasil diunggah",
 	}
+	AvatarDownloaded = model.Message{
+		"en": "Avatar downloaded successfully",
+		"id": "Avatar berhasil diunduh",
+	}
 )
 
 var (
@@ -45,5 +49,17 @@ var (
 	FileNotFound = model.Message{
 		"en": "File not found",
 		"id": "File tidak ditemukan",
+	}
+	FailedGetPresignedURL = model.Message{
+		"en": "Failed to get presigned URL",
+		"id": "Gagal mendapatkan URL presigned",
+	}
+	FailedFindUserByID = model.Message{
+		"en": "Failed to find user by ID",
+		"id": "Gagal menemukan pengguna berdasarkan ID",
+	}
+	UserNotFound = model.Message{
+		"en": "User not found",
+		"id": "Pengguna tidak ditemukan",
 	}
 )

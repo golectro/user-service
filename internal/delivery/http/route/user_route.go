@@ -17,4 +17,6 @@ func (c *RouteConfig) RegisterUserRoutes(rg *gin.RouterGroup, minioClient *minio
 		BucketName:    c.Viper.GetString("MINIO_BUCKET_AVATAR"),
 		AllowedTypes:  []string{"image/jpeg", "image/png", "image/gif"},
 	}), c.UserController.UploadAvatar)
+
+	user.GET("/avatar/download", c.AuthMiddleware, c.UserController.DownloadAvatar)
 }

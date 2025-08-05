@@ -10,6 +10,7 @@ import (
 	"golectro-user/internal/utils"
 
 	"github.com/go-playground/validator/v10"
+	"github.com/google/uuid"
 
 	"github.com/sirupsen/logrus"
 	"gorm.io/gorm"
@@ -30,6 +31,26 @@ func NewUserUsecase(db *gorm.DB, log *logrus.Logger, validate *validator.Validat
 		Validate:       validate,
 		UserRepository: userRepository,
 	}
+}
+
+func (uc *UserUseCase) FindUserByID(ctx context.Context, id uuid.UUID) (*model.UserResponse, error) {
+	if err := uc.Validate.Var(id, "required"); err != nil {
+		uc.Log.WithError(err).Error("Invalid input format")
+		message := utils.TranslateValidationError(uc.Validate, err)
+		return nil, utils.WrapMessageAsError(message)
+	}
+
+	user, err := uc.UserRepository.FindByID(uc.DB.WithContext(ctx), id)
+	if err != nil {
+		uc.Log.WithError(err).Error("Failed to find user by ID")
+		return nil, utils.WrapMessageAsError(constants.FailedFindUserByID, err)
+	}
+
+	if user == nil {
+		return nil, utils.WrapMessageAsError(constants.UserNotFound)
+	}
+
+	return converter.UserToResponse(user), nil
 }
 
 func (uc *UserUseCase) Sync(ctx context.Context, auth *model.Auth) (*model.UserSyncResponse, error) {
@@ -59,7 +80,7 @@ func (uc *UserUseCase) Sync(ctx context.Context, auth *model.Auth) (*model.UserS
 		return nil, utils.WrapMessageAsError(constants.FailedSyncUser, err)
 	}
 
-	return converter.UserToResponse(user), nil
+	return converter.UserSyncToResponse(user), nil
 }
 
 func (uc *UserUseCase) UploadAvatar(ctx context.Context, auth *model.Auth, uploadedFile map[string]any) (*model.UploadAvatarResponse, error) {

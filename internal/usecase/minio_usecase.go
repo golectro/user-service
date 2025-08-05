@@ -10,21 +10,21 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-type MinioUsecase struct {
+type MinioUseCase struct {
 	Repo     *repository.MinioRepository
 	Validate *validator.Validate
 	Log      *logrus.Logger
 }
 
-func NewMinioUsecase(repo *repository.MinioRepository, validate *validator.Validate, log *logrus.Logger) *MinioUsecase {
-	return &MinioUsecase{
+func NewMinioUsecase(repo *repository.MinioRepository, validate *validator.Validate, log *logrus.Logger) *MinioUseCase {
+	return &MinioUseCase{
 		Repo:     repo,
 		Validate: validate,
 		Log:      log,
 	}
 }
 
-func (u *MinioUsecase) ValidateRequest(request *model.UploadFileRequest) error {
+func (u *MinioUseCase) ValidateRequest(request *model.UploadFileRequest) error {
 	if err := u.Validate.Struct(request); err != nil {
 		u.Log.WithError(err).Error("Invalid input format")
 		message := utils.TranslateValidationError(u.Validate, err)
@@ -33,14 +33,14 @@ func (u *MinioUsecase) ValidateRequest(request *model.UploadFileRequest) error {
 	return nil
 }
 
-func (u *MinioUsecase) Upload(ctx context.Context, input model.UploadFileInput) error {
+func (u *MinioUseCase) Upload(ctx context.Context, input model.UploadFileInput) error {
 	return u.Repo.UploadFile(ctx, input)
 }
 
-func (u *MinioUsecase) GetPresignedURL(ctx context.Context, input model.PresignedURLInput) (string, error) {
+func (u *MinioUseCase) GetPresignedURL(ctx context.Context, input model.PresignedURLInput) (string, error) {
 	return u.Repo.GeneratePresignedURL(ctx, input)
 }
 
-func (u *MinioUsecase) Delete(ctx context.Context, bucket, objectKey string) error {
+func (u *MinioUseCase) Delete(ctx context.Context, bucket, objectKey string) error {
 	return u.Repo.DeleteFile(ctx, bucket, objectKey)
 }

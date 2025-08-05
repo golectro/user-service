@@ -8,17 +8,17 @@ import (
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
-type LogUsecase struct {
+type LogUseCase struct {
 	Collection *mongo.Collection
 }
 
-func NewLogUsecase(mongoDB *mongo.Database) *LogUsecase {
-	return &LogUsecase{
+func NewLogUsecase(mongoDB *mongo.Database) *LogUseCase {
+	return &LogUseCase{
 		Collection: mongoDB.Collection("logs"),
 	}
 }
 
-func (l *LogUsecase) LogActivity(ctx context.Context, level, requestID, message, userID, endpoint string, statusCode int, errMsg string) error {
+func (l *LogUseCase) LogActivity(ctx context.Context, level, requestID, message, userID, endpoint string, statusCode int, errMsg string) error {
 	logEntry := model.ActivityLog{
 		UserID:     userID,
 		Level:      level,

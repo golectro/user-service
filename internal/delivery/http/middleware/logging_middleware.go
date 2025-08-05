@@ -9,7 +9,7 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-func LoggingMiddleware(logger *logrus.Logger, logUC *usecase.LogUsecase) gin.HandlerFunc {
+func LoggingMiddleware(logger *logrus.Logger, logUC *usecase.LogUseCase) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		start := time.Now()
 		path := c.Request.URL.Path

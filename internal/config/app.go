@@ -35,11 +35,13 @@ type BootstrapConfig struct {
 func Bootstrap(config *BootstrapConfig) {
 	userRepository := repository.NewUserRepository(config.Log)
 	addressRepository := repository.NewAddressRepository(config.Log)
+	minioRepository := repository.NewMinioRepository(config.Minio)
 
 	userUseCase := usecase.NewUserUsecase(config.DB, config.Log, config.Validate, userRepository)
 	addressUseCase := usecase.NewAddressUsecase(config.DB, config.Log, config.Validate, addressRepository)
+	minioUseCae := usecase.NewMinioUsecase(minioRepository, config.Validate, config.Log)
 
-	userController := http.NewUserController(userUseCase, config.Log)
+	userController := http.NewUserController(userUseCase, minioUseCae, config.Log, config.Viper)
 	addressController := http.NewAddressController(addressUseCase, config.Log)
 
 	authMiddleware := middleware.NewAuth(userUseCase, config.Viper)

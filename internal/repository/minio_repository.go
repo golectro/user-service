@@ -37,3 +37,11 @@ func (r *MinioRepository) GeneratePresignedURL(ctx context.Context, input model.
 func (r *MinioRepository) DeleteFile(ctx context.Context, bucket, objectKey string) error {
 	return r.Client.RemoveObject(ctx, bucket, objectKey, minio.RemoveObjectOptions{})
 }
+
+func (r *MinioRepository) GetObject(ctx context.Context, bucket, objectKey string) (*minio.Object, error) {
+	object, err := r.Client.GetObject(ctx, bucket, objectKey, minio.GetObjectOptions{})
+	if err != nil {
+		return nil, err
+	}
+	return object, nil
+}
