@@ -12,3 +12,7 @@ type UserSyncResponse struct {
 	Username     string    `json:"username"`
 	AvatarObject string    `json:"avatar_object,omitempty"`
 }
+
+type UploadAvatarResponse struct {
+	AvatarObject string `json:"avatar_object"`
+}

@@ -20,6 +20,7 @@ type UserUseCase struct {
 	Log            *logrus.Logger
 	Validate       *validator.Validate
 	UserRepository *repository.UserRepository
+	Repository     *repository.Repository[entity.User]
 }
 
 func NewUserUsecase(db *gorm.DB, log *logrus.Logger, validate *validator.Validate, userRepository *repository.UserRepository) *UserUseCase {
@@ -59,4 +60,40 @@ func (uc *UserUseCase) Sync(ctx context.Context, auth *model.Auth) (*model.UserS
 	}
 
 	return converter.UserToResponse(user), nil
+}
+
+func (uc *UserUseCase) UploadAvatar(ctx context.Context, auth *model.Auth, uploadedFile map[string]any) (*model.UploadAvatarResponse, error) {
+	exists, err := uc.UserRepository.FindByID(uc.DB, auth.ID)
+	if err != nil {
+		uc.Log.WithError(err).Error("Failed to find user by ID")
+		return nil, utils.WrapMessageAsError(constants.FailedUploadAvatar, err)
+	}
+
+	if exists == nil {
+		uc.Log.Error("User not found")
+		return nil, utils.WrapMessageAsError(constants.FailedUploadAvatar, err)
+	}
+
+	tx := uc.DB.WithContext(ctx).Begin()
+	defer tx.Rollback()
+
+	if err := uc.Repository.Update(tx, &entity.User{
+		CreatedAt:    exists.CreatedAt,
+		Email:        exists.Email,
+		Username:     exists.Username,
+		ID:           auth.ID,
+		AvatarObject: uploadedFile["file_name"].(string),
+	}); err != nil {
+		uc.Log.WithError(err).Error("Failed to update user avatar")
+		return nil, utils.WrapMessageAsError(constants.FailedUploadAvatar, err)
+	}
+
+	if err := tx.Commit().Error; err != nil {
+		uc.Log.WithError(err).Error("Failed to commit transaction")
+		return nil, utils.WrapMessageAsError(constants.FailedUploadAvatar, err)
+	}
+
+	return &model.UploadAvatarResponse{
+		AvatarObject: uploadedFile["file_name"].(string),
+	}, nil
 }

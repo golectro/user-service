@@ -29,18 +29,18 @@ func (s *AddressHandler) GetAddress(ctx context.Context, _ *proto.GetAddressRequ
 	addresses := make([]*proto.Address, 0, len(user))
 	for _, addr := range user {
 		addresses = append(addresses, &proto.Address{
-			Id:            addr.ID.String(),
-			Label:         addr.Label,
-			Recipient:     addr.Recipient,
-			Phone:         addr.Phone,
-			AddressLine:   addr.AddressLine,
-			City:          addr.City,
-			Province:      addr.Province,
-			PostalCode:    addr.PostalCode,
-			IsDefault:     addr.IsDefault,
-			Encrypted:     addr.Encrypted,
-			CreatedAt:     addr.CreatedAt.Format("2006-01-02T15:04:05+07:00"),
-			UpdatedAt:     addr.UpdatedAt.Format("2006-01-02T15:04:05+07:00"),
+			Id:          addr.ID.String(),
+			Label:       addr.Label,
+			Recipient:   addr.Recipient,
+			Phone:       addr.Phone,
+			AddressLine: addr.AddressLine,
+			City:        addr.City,
+			Province:    addr.Province,
+			PostalCode:  addr.PostalCode,
+			IsDefault:   addr.IsDefault,
+			Encrypted:   addr.Encrypted,
+			CreatedAt:   addr.CreatedAt.Format("2006-01-02T15:04:05+07:00"),
+			UpdatedAt:   addr.UpdatedAt.Format("2006-01-02T15:04:05+07:00"),
 		})
 	}
 
