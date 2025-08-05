@@ -39,6 +39,7 @@ func (r *UserRepository) Sync(db *gorm.DB, user *entity.User) error {
 		}
 	} else {
 		user.CreatedAt = existingUser.CreatedAt
+		user.AvatarObject = existingUser.AvatarObject
 
 		if err := r.Update(db, user); err != nil {
 			r.Log.WithError(err).Error("Failed to update existing user")
