@@ -21,7 +21,6 @@ type UserUseCase struct {
 	Log            *logrus.Logger
 	Validate       *validator.Validate
 	UserRepository *repository.UserRepository
-	Repository     *repository.Repository[entity.User]
 }
 
 func NewUserUsecase(db *gorm.DB, log *logrus.Logger, validate *validator.Validate, userRepository *repository.UserRepository) *UserUseCase {
@@ -98,7 +97,7 @@ func (uc *UserUseCase) UploadAvatar(ctx context.Context, auth *model.Auth, uploa
 	tx := uc.DB.WithContext(ctx).Begin()
 	defer tx.Rollback()
 
-	if err := uc.Repository.Update(tx, &entity.User{
+	if err := uc.UserRepository.Update(tx, &entity.User{
 		CreatedAt:    exists.CreatedAt,
 		Email:        exists.Email,
 		Username:     exists.Username,
