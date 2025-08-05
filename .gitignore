@@ -32,3 +32,10 @@ go.work.sum
 # Editor/IDE
 .idea/
 .vscode/
+
+# Temporary files
+*.tmp
+tmp
+
+# Logs
+*.log
