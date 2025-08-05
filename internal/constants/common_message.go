@@ -27,6 +27,10 @@ var (
 		"en": "Invalid token",
 		"id": "Token tidak valid",
 	}
+	InvalidRequestData = model.Message{
+		"en": "Invalid request data",
+		"id": "Data permintaan tidak valid",
+	}
 	InternalServerError = model.Message{
 		"en": "Internal server error",
 		"id": "Kesalahan internal server",
