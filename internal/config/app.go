@@ -39,9 +39,9 @@ func Bootstrap(config *BootstrapConfig) {
 
 	userUseCase := usecase.NewUserUsecase(config.DB, config.Log, config.Validate, userRepository)
 	addressUseCase := usecase.NewAddressUsecase(config.DB, config.Log, config.Validate, addressRepository)
-	minioUseCae := usecase.NewMinioUsecase(minioRepository, config.Validate, config.Log)
+	minioUseCase := usecase.NewMinioUsecase(minioRepository, config.Validate, config.Log)
 
-	userController := http.NewUserController(userUseCase, minioUseCae, config.Log, config.Viper)
+	userController := http.NewUserController(userUseCase, minioUseCase, config.Log, config.Viper)
 	addressController := http.NewAddressController(addressUseCase, config.Log)
 
 	authMiddleware := middleware.NewAuth(userUseCase, config.Viper)
