@@ -15,6 +15,10 @@ var (
 		"en": "Address created successfully",
 		"id": "Alamat berhasil dibuat",
 	}
+	SetDefaultAddressSuccess = model.Message{
+		"en": "Default address set successfully",
+		"id": "Alamat default berhasil diatur",
+	}
 )
 
 var (
@@ -29,5 +33,17 @@ var (
 	FailedUpdateAddress = model.Message{
 		"en": "Failed to update address",
 		"id": "Gagal memperbarui alamat",
+	}
+	AddressNotFound = model.Message{
+		"en": "Address not found",
+		"id": "Alamat tidak ditemukan",
+	}
+	FailedDeleteAddress = model.Message{
+		"en": "Failed to delete address",
+		"id": "Gagal menghapus alamat",
+	}
+	FailedSetDefaultAddress = model.Message{
+		"en": "Failed to set default address",
+		"id": "Gagal mengatur alamat default",
 	}
 )

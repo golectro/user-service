@@ -62,3 +62,70 @@ func (c *AddressController) CreateAddress(ctx *gin.Context) {
 	ctx.JSON(res.StatusCode, res)
 
 }
+
+func (c *AddressController) UpdateAddress(ctx *gin.Context) {
+	auth := middleware.GetUser(ctx)
+	addressID := ctx.Param("id")
+	if addressID == "" {
+		c.Log.Error("Address ID is required")
+		res := utils.FailedResponse(ctx, http.StatusBadRequest, constants.InvalidRequestData, nil)
+		ctx.AbortWithStatusJSON(res.StatusCode, res)
+		return
+	}
+
+	request := new(model.UserAddressRequest)
+	if err := ctx.ShouldBindJSON(request); err != nil {
+		c.Log.WithError(err).Error("Invalid request data")
+		res := utils.FailedResponse(ctx, http.StatusBadRequest, constants.InvalidRequestData, err)
+		ctx.AbortWithStatusJSON(res.StatusCode, res)
+		return
+	}
+
+	addressId, err := utils.ParseUUID(addressID)
+	if err != nil {
+		c.Log.WithError(err).Error("Invalid address ID format")
+		res := utils.FailedResponse(ctx, http.StatusBadRequest, constants.InvalidRequestData, err)
+		ctx.AbortWithStatusJSON(res.StatusCode, res)
+		return
+	}
+
+	result, err := c.UseCase.UpdateAddress(ctx, request, addressId, auth.ID)
+	if err != nil {
+		c.Log.WithError(err).Error("Failed to update address")
+		res := utils.FailedResponse(ctx, http.StatusBadRequest, constants.FailedUpdateAddress, err)
+		ctx.AbortWithStatusJSON(res.StatusCode, res)
+		return
+	}
+
+	res := utils.SuccessResponse(ctx, http.StatusOK, constants.UpdateAddressSuccess, result)
+	ctx.JSON(res.StatusCode, res)
+}
+
+func (c *AddressController) SetDefaultAddress(ctx *gin.Context) {
+	auth := middleware.GetUser(ctx)
+	addressID := ctx.Param("id")
+	if addressID == "" {
+		c.Log.Error("Address ID is required")
+		res := utils.FailedResponse(ctx, http.StatusBadRequest, constants.InvalidRequestData, nil)
+		ctx.AbortWithStatusJSON(res.StatusCode, res)
+		return
+	}
+
+	addressId, err := utils.ParseUUID(addressID)
+	if err != nil {
+		c.Log.WithError(err).Error("Invalid address ID format")
+		res := utils.FailedResponse(ctx, http.StatusBadRequest, constants.InvalidRequestData, err)
+		ctx.AbortWithStatusJSON(res.StatusCode, res)
+		return
+	}
+
+	if err := c.UseCase.SetDefaultAddress(ctx, addressId, auth.ID); err != nil {
+		c.Log.WithError(err).Error("Failed to set default address")
+		res := utils.FailedResponse(ctx, http.StatusBadRequest, constants.FailedUpdateAddress, err)
+		ctx.AbortWithStatusJSON(res.StatusCode, res)
+		return
+	}
+
+	res := utils.SuccessResponse(ctx, http.StatusOK, constants.SetDefaultAddressSuccess, true)
+	ctx.JSON(res.StatusCode, res)
+}

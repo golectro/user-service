@@ -81,3 +81,78 @@ func (uc *AddressUseCase) CreateAddress(ctx context.Context, request *model.User
 
 	return converter.ToUserAddressResponse(address), nil
 }
+
+func (uc *AddressUseCase) UpdateAddress(ctx context.Context, request *model.UserAddressRequest, addressID uuid.UUID, userID uuid.UUID) (*model.UserAddressResponse, error) {
+	tx := uc.DB.WithContext(ctx).Begin()
+	defer tx.Rollback()
+
+	if err := uc.Validate.Struct(request); err != nil {
+		message := utils.TranslateValidationError(uc.Validate, err)
+		return nil, utils.WrapMessageAsError(message)
+	}
+
+	address, err := uc.AddressRepository.FindByID(tx, addressID)
+	if err != nil {
+		uc.Log.WithError(err).Error("Failed to find address by ID")
+		return nil, utils.WrapMessageAsError(constants.FailedGetAddresses, err)
+	}
+
+	if address == nil || address.UserID != userID {
+		return nil, utils.WrapMessageAsError(constants.AddressNotFound)
+	}
+
+	address.Label = request.Label
+	address.Recipient = request.Recipient
+	address.Phone = request.Phone
+	address.AddressLine = request.AddressLine
+	address.City = request.City
+	address.Province = request.Province
+	address.PostalCode = request.PostalCode
+	address.IsDefault = request.IsDefault
+
+	if err := uc.AddressRepository.Update(tx, address); err != nil {
+		uc.Log.WithError(err).Error("Failed to update address")
+		return nil, utils.WrapMessageAsError(constants.FailedUpdateAddress, err)
+	}
+
+	if err := tx.Commit().Error; err != nil {
+		uc.Log.WithError(err).Error("Failed to commit transaction")
+		return nil, utils.WrapMessageAsError(constants.FailedUpdateAddress, err)
+	}
+
+	return converter.ToUserAddressResponse(address), nil
+}
+
+func (uc *AddressUseCase) SetDefaultAddress(ctx context.Context, addressID uuid.UUID, userID uuid.UUID) error {
+	tx := uc.DB.WithContext(ctx).Begin()
+	defer tx.Rollback()
+
+	address, err := uc.AddressRepository.FindByID(tx, addressID)
+	if err != nil {
+		uc.Log.WithError(err).Error("Failed to find address by ID")
+		return utils.WrapMessageAsError(constants.FailedGetAddresses, err)
+	}
+
+	if address == nil || address.UserID != userID {
+		return utils.WrapMessageAsError(constants.AddressNotFound)
+	}
+
+	address.IsDefault = true
+
+	if err := uc.AddressRepository.Update(tx, address); err != nil {
+		uc.Log.WithError(err).Error("Failed to set default address")
+		return utils.WrapMessageAsError(constants.FailedSetDefaultAddress, err)
+	}
+
+	if err := uc.AddressRepository.UnsetOtherDefaultAddresses(tx, userID, addressID); err != nil {
+		uc.Log.WithError(err).Error("Failed to unset other default addresses")
+		return utils.WrapMessageAsError(constants.FailedSetDefaultAddress, err)
+	}
+
+	if err := tx.Commit().Error; err != nil {
+		uc.Log.WithError(err).Error("Failed to commit transaction")
+		return utils.WrapMessageAsError(constants.FailedSetDefaultAddress, err)
+	}
+
+	return nil
+}
