@@ -3,6 +3,8 @@ package middleware
 import (
 	"context"
 	"fmt"
+	"golectro-user/internal/constants"
+	"golectro-user/internal/utils"
 	"io"
 	"net/http"
 	"path/filepath"
@@ -27,38 +29,44 @@ func SingleFileUpload(minioClient *minio.Client, opts UploadOptions) gin.Handler
 		auth := GetUser(c)
 		file, err := c.FormFile(opts.FieldName)
 		if err != nil {
-			c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"error": fmt.Sprintf("Field '%s' tidak ditemukan", opts.FieldName)})
+			res := utils.FailedResponse(c, http.StatusBadRequest, constants.FileNotFound, nil)
+			c.AbortWithStatusJSON(res.StatusCode, res)
 			return
 		}
 
 		if file.Size > opts.MaxFileSizeMB*1024*1024 {
-			c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"error": "Ukuran file terlalu besar"})
+			res := utils.FailedResponse(c, http.StatusBadRequest, constants.FileSizeExceeded, nil)
+			c.AbortWithStatusJSON(res.StatusCode, res)
 			return
 		}
 
 		src, err := file.Open()
 		if err != nil {
-			c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"error": "Gagal membuka file"})
+			res := utils.FailedResponse(c, http.StatusInternalServerError, constants.InvalidOpenFile, nil)
+			c.AbortWithStatusJSON(res.StatusCode, res)
 			return
 		}
 		defer src.Close()
 
 		buffer := make([]byte, 512)
 		if _, err := src.Read(buffer); err != nil {
-			c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"error": "Gagal membaca file"})
+			res := utils.FailedResponse(c, http.StatusInternalServerError, constants.InvalidReadFile, nil)
+			c.AbortWithStatusJSON(res.StatusCode, res)
 			return
 		}
 		contentType := http.DetectContentType(buffer)
 
 		if _, err := src.Seek(0, io.SeekStart); err != nil {
-			c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"error": "Gagal reset posisi file"})
+			res := utils.FailedResponse(c, http.StatusInternalServerError, constants.InvalidResetPosition, nil)
+			c.AbortWithStatusJSON(res.StatusCode, res)
 			return
 		}
 
 		if len(opts.AllowedTypes) > 0 {
 			allowed := slices.Contains(opts.AllowedTypes, contentType)
 			if !allowed {
-				c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"error": fmt.Sprintf("Tipe file tidak diizinkan: %s", contentType)})
+				res := utils.FailedResponse(c, http.StatusInternalServerError, constants.InvalidFileType, nil)
+				c.AbortWithStatusJSON(res.StatusCode, res)
 				return
 			}
 		}
@@ -88,7 +96,8 @@ func SingleFileUpload(minioClient *minio.Client, opts UploadOptions) gin.Handler
 			},
 		)
 		if err != nil {
-			c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"error": "Gagal upload ke MinIO"})
+			res := utils.FailedResponse(c, http.StatusInternalServerError, constants.FailedUploadAvatar, nil)
+			c.AbortWithStatusJSON(res.StatusCode, res)
 			return
 		}
 
@@ -112,13 +121,15 @@ func MultipleFileUpload(minioClient *minio.Client, opts UploadOptions) gin.Handl
 
 		form, err := c.MultipartForm()
 		if err != nil {
-			c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"error": "Gagal membaca form data"})
+			res := utils.FailedResponse(c, http.StatusBadRequest, constants.FileNotFound, nil)
+			c.AbortWithStatusJSON(res.StatusCode, res)
 			return
 		}
 
 		files := form.File[opts.FieldName]
 		if len(files) == 0 {
-			c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"error": fmt.Sprintf("Field '%s' tidak ditemukan", opts.FieldName)})
+			res := utils.FailedResponse(c, http.StatusBadRequest, constants.FileNotFound, nil)
+			c.AbortWithStatusJSON(res.StatusCode, res)
 			return
 		}
 
@@ -126,27 +137,31 @@ func MultipleFileUpload(minioClient *minio.Client, opts UploadOptions) gin.Handl
 
 		for _, file := range files {
 			if file.Size > opts.MaxFileSizeMB*1024*1024 {
-				c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"error": fmt.Sprintf("Ukuran file '%s' terlalu besar", file.Filename)})
+				res := utils.FailedResponse(c, http.StatusBadRequest, constants.FileSizeExceeded, nil)
+				c.AbortWithStatusJSON(res.StatusCode, res)
 				return
 			}
 
 			src, err := file.Open()
 			if err != nil {
-				c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"error": fmt.Sprintf("Gagal membuka file '%s'", file.Filename)})
+				res := utils.FailedResponse(c, http.StatusInternalServerError, constants.InvalidOpenFile, nil)
+				c.AbortWithStatusJSON(res.StatusCode, res)
 				return
 			}
 
 			buffer := make([]byte, 512)
 			if _, err := src.Read(buffer); err != nil {
 				src.Close()
-				c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"error": "Gagal membaca file"})
+				res := utils.FailedResponse(c, http.StatusInternalServerError, constants.InvalidReadFile, nil)
+				c.AbortWithStatusJSON(res.StatusCode, res)
 				return
 			}
 			contentType := http.DetectContentType(buffer)
 
 			if _, err := src.Seek(0, io.SeekStart); err != nil {
 				src.Close()
-				c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"error": "Gagal reset posisi file"})
+				res := utils.FailedResponse(c, http.StatusInternalServerError, constants.InvalidResetPosition, nil)
+				c.AbortWithStatusJSON(res.StatusCode, res)
 				return
 			}
 
@@ -154,7 +169,8 @@ func MultipleFileUpload(minioClient *minio.Client, opts UploadOptions) gin.Handl
 				allowed := slices.Contains(opts.AllowedTypes, contentType)
 				if !allowed {
 					src.Close()
-					c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"error": fmt.Sprintf("Tipe file tidak diizinkan: %s", contentType)})
+					res := utils.FailedResponse(c, http.StatusInternalServerError, constants.InvalidFileType, nil)
+					c.AbortWithStatusJSON(res.StatusCode, res)
 					return
 				}
 			}
@@ -186,7 +202,8 @@ func MultipleFileUpload(minioClient *minio.Client, opts UploadOptions) gin.Handl
 			src.Close()
 
 			if err != nil {
-				c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"error": fmt.Sprintf("Gagal upload file '%s'", file.Filename)})
+				res := utils.FailedResponse(c, http.StatusInternalServerError, constants.FailedUploadAvatar, nil)
+				c.AbortWithStatusJSON(res.StatusCode, res)
 				return
 			}
 
