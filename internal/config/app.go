@@ -49,6 +49,8 @@ func Bootstrap(config *BootstrapConfig) {
 		UserController:    userController,
 		AddressController: addressController,
 		AuthMiddleware:    authMiddleware,
+		Minio:             config.Minio,
+		Viper:             config.Viper,
 	}
 	routeConfig.Setup()
 }
