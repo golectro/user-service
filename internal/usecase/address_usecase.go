@@ -32,18 +32,18 @@ func NewAddressUsecase(db *gorm.DB, log *logrus.Logger, validate *validator.Vali
 	}
 }
 
-func (uc *AddressUseCase) GetAddressesByUserID(ctx context.Context, userID uuid.UUID) ([]model.UserAddressResponse, error) {
-	address, err := uc.AddressRepository.FindByUserID(uc.DB.WithContext(ctx), userID)
+func (uc *AddressUseCase) GetAddressesByUserID(ctx context.Context, userID uuid.UUID, limit, offset int) ([]model.UserAddressResponse, int64, error) {
+	address, total, err := uc.AddressRepository.FindByUserID(uc.DB.WithContext(ctx), userID, limit, offset)
 	if err != nil {
 		uc.Log.WithError(err).Error("Failed to find addresses by user ID")
-		return nil, utils.WrapMessageAsError(constants.FailedGetAddresses, err)
+		return nil, 0, utils.WrapMessageAsError(constants.FailedGetAddresses, err)
 	}
 
 	if address == nil {
-		return nil, utils.WrapMessageAsError(constants.FailedGetAddresses)
+		return nil, 0, utils.WrapMessageAsError(constants.FailedGetAddresses)
 	}
 
-	return converter.ToUserAddressResponses(address), nil
+	return converter.ToUserAddressResponses(address), total, nil
 
 }
 

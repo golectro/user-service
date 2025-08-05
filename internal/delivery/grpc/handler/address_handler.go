@@ -21,7 +21,7 @@ func (s *AddressHandler) GetAddress(ctx context.Context, _ *proto.GetAddressRequ
 		return nil, status.Error(codes.Internal, "auth not found in context")
 	}
 
-	user, err := s.UseCase.GetAddressesByUserID(ctx, auth.ID)
+	user, _, err := s.UseCase.GetAddressesByUserID(ctx, auth.ID, 0, 0)
 	if err != nil {
 		return nil, status.Error(codes.Internal, "failed to get user profile")
 	}

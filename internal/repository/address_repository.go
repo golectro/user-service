@@ -20,20 +20,26 @@ func NewAddressRepository(log *logrus.Logger) *AddressRepository {
 	}
 }
 
-func (r *AddressRepository) FindByUserID(db *gorm.DB, userID uuid.UUID) ([]entity.Address, error) {
+func (r *AddressRepository) FindByUserID(db *gorm.DB, userID uuid.UUID, limit, offset int) ([]entity.Address, int64, error) {
 	var addresses []entity.Address
-	err := db.Where("user_id = ?", userID).Find(&addresses).Error
+	var total int64
 
-	if errors.Is(err, gorm.ErrRecordNotFound) {
-		return nil, nil
+	query := db.Model(&entity.Address{}).Where("user_id = ?", userID)
+
+	// Hitung total
+	if err := query.Count(&total).Error; err != nil {
+		r.Log.WithError(err).Error("Failed to count addresses by user ID")
+		return nil, 0, err
 	}
 
+	// Ambil data paginated
+	err := query.Limit(limit).Offset(offset).Find(&addresses).Error
 	if err != nil {
-		r.Log.WithError(err).Error("Failed to find addresses by user ID")
-		return nil, err
+		r.Log.WithError(err).Error("Failed to find paginated addresses by user ID")
+		return nil, 0, err
 	}
 
-	return addresses, nil
+	return addresses, total, nil
 }
 
 func (r *AddressRepository) FindByID(db *gorm.DB, addressID uuid.UUID) (*entity.Address, error) {

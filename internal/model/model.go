@@ -9,13 +9,6 @@ const (
 
 type Message map[string]string
 
-type PageMetadata struct {
-	Page      int   `json:"page"`
-	Size      int   `json:"size"`
-	TotalItem int64 `json:"total_item"`
-	TotalPage int64 `json:"total_page"`
-}
-
 type WebResponse[T any] struct {
 	Status           Status        `json:"status"`
 	StatusCode       int           `json:"statusCode"`
@@ -33,4 +26,13 @@ type WebResponse[T any] struct {
 type PageResponse[T any] struct {
 	Data         []T          `json:"data,omitempty"`
 	PageMetadata PageMetadata `json:"paging"`
+}
+
+type PageMetadata struct {
+	CurrentPage int   `json:"current_page"`
+	PageSize    int   `json:"page_size"`
+	TotalItem   int64 `json:"total_item"`
+	TotalPage   int64 `json:"total_page"`
+	HasNext     bool  `json:"has_next"`
+	HasPrevious bool  `json:"has_previous"`
 }
