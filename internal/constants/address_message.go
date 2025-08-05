@@ -19,6 +19,10 @@ var (
 		"en": "Default address set successfully",
 		"id": "Alamat default berhasil diatur",
 	}
+	AddressDeleted = model.Message{
+		"en": "Address deleted successfully",
+		"id": "Alamat berhasil dihapus",
+	}
 )
 
 var (

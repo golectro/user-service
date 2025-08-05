@@ -129,3 +129,32 @@ func (c *AddressController) SetDefaultAddress(ctx *gin.Context) {
 	res := utils.SuccessResponse(ctx, http.StatusOK, constants.SetDefaultAddressSuccess, true)
 	ctx.JSON(res.StatusCode, res)
 }
+
+func (c *AddressController) DeleteAddress(ctx *gin.Context) {
+	auth := middleware.GetUser(ctx)
+	addressID := ctx.Param("id")
+	if addressID == "" {
+		c.Log.Error("Address ID is required")
+		res := utils.FailedResponse(ctx, http.StatusBadRequest, constants.InvalidRequestData, nil)
+		ctx.AbortWithStatusJSON(res.StatusCode, res)
+		return
+	}
+
+	addressId, err := utils.ParseUUID(addressID)
+	if err != nil {
+		c.Log.WithError(err).Error("Invalid address ID format")
+		res := utils.FailedResponse(ctx, http.StatusBadRequest, constants.InvalidRequestData, err)
+		ctx.AbortWithStatusJSON(res.StatusCode, res)
+		return
+	}
+
+	if err := c.UseCase.DeleteAddress(ctx, addressId, auth.ID); err != nil {
+		c.Log.WithError(err).Error("Failed to delete address")
+		res := utils.FailedResponse(ctx, http.StatusBadRequest, constants.FailedDeleteAddress, err)
+		ctx.AbortWithStatusJSON(res.StatusCode, res)
+		return
+	}
+
+	res := utils.SuccessResponse(ctx, http.StatusOK, constants.AddressDeleted, true)
+	ctx.JSON(res.StatusCode, res)
+}

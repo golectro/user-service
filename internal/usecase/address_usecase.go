@@ -156,3 +156,30 @@ func (uc *AddressUseCase) SetDefaultAddress(ctx context.Context, addressID uuid.
 
 	return nil
 }
+
+func (uc *AddressUseCase) DeleteAddress(ctx context.Context, addressID uuid.UUID, userID uuid.UUID) error {
+	tx := uc.DB.WithContext(ctx).Begin()
+	defer tx.Rollback()
+
+	address, err := uc.AddressRepository.FindByID(tx, addressID)
+	if err != nil {
+		uc.Log.WithError(err).Error("Failed to find address by ID")
+		return utils.WrapMessageAsError(constants.FailedGetAddresses, err)
+	}
+
+	if address == nil || address.UserID != userID {
+		return utils.WrapMessageAsError(constants.AddressNotFound)
+	}
+
+	if err := uc.AddressRepository.Delete(tx, address); err != nil {
+		uc.Log.WithError(err).Error("Failed to delete address")
+		return utils.WrapMessageAsError(constants.FailedDeleteAddress, err)
+	}
+
+	if err := tx.Commit().Error; err != nil {
+		uc.Log.WithError(err).Error("Failed to commit transaction")
+		return utils.WrapMessageAsError(constants.FailedDeleteAddress, err)
+	}
+
+	return nil
+}
