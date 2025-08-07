@@ -10,6 +10,7 @@ import (
 	"github.com/elastic/go-elasticsearch/v8"
 	"github.com/gin-gonic/gin"
 	"github.com/go-playground/validator/v10"
+	"github.com/hashicorp/vault/api"
 	"github.com/minio/minio-go/v7"
 	"github.com/redis/go-redis/v9"
 	"github.com/sirupsen/logrus"
@@ -30,6 +31,7 @@ type BootstrapConfig struct {
 	GRPCClient *grpc.ClientConn
 	Elastic    *elasticsearch.Client
 	Minio      *minio.Client
+	Vault      *api.Client
 }
 
 func Bootstrap(config *BootstrapConfig) {
