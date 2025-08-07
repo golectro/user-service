@@ -48,7 +48,7 @@ func NewRateLimiter(viper *viper.Viper, redis *redis.Client) gin.HandlerFunc {
 		ctx.Header("X-RateLimit-Reset", fmt.Sprintf("%d", limiterCtx.Reset))
 
 		if limiterCtx.Reached {
-			res := utils.FailedResponse(ctx, http.StatusTooManyRequests, constants.TooManyRequests, nil, constants.DocToManyRequestsURL)
+			res := utils.FailedResponse(ctx, http.StatusTooManyRequests, constants.TooManyRequests, nil)
 			ctx.AbortWithStatusJSON(res.StatusCode, res)
 			return
 		}

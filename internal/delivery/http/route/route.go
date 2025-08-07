@@ -14,6 +14,7 @@ type RouteConfig struct {
 	AuthMiddleware    gin.HandlerFunc
 	UserController    *http.UserController
 	AddressController *http.AddressController
+	SwaggerController *http.SwaggerController
 	Viper             *viper.Viper
 }
 
@@ -23,4 +24,5 @@ func (c *RouteConfig) Setup() {
 	c.RegisterUserRoutes(api, c.Minio)
 	c.RegisterCommonRoutes(c.App)
 	c.RegisterAddressRoutes(api)
+	c.RegisterSwaggerRoutes(api)
 }

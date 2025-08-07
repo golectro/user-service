@@ -1,11 +1,11 @@
 package utils
 
 import (
+	"fmt"
 	"net/http"
 	"strings"
 	"time"
 
-	"golectro-user/internal/constants"
 	"golectro-user/internal/model"
 
 	"github.com/gin-gonic/gin"
@@ -31,11 +31,21 @@ func getRequestID(ctx *gin.Context) string {
 	return ""
 }
 
-func getDocumentationURL(documentationURL ...string) string {
-	if len(documentationURL) > 0 && documentationURL[0] != "" {
-		return documentationURL[0]
+func getDocumentationURL(ctx *gin.Context) string {
+	scheme := "http"
+	if ctx.Request.TLS != nil {
+		scheme = "https"
 	}
-	return constants.DocBaseURL
+
+	host := ctx.Request.Host
+	fullPath := strings.TrimPrefix(ctx.FullPath(), "/api/")
+	pathSegments := strings.Split(fullPath, "/")
+
+	if len(pathSegments) == 1 && pathSegments[0] != "" {
+		fullPath = fmt.Sprintf("%s/%s", fullPath, strings.ToLower(ctx.Request.Method))
+	}
+
+	return fmt.Sprintf("%s://%s/api/docs/#/%s", scheme, host, fullPath)
 }
 
 func getCurrentTimestamp() string {
@@ -43,7 +53,7 @@ func getCurrentTimestamp() string {
 	return time.Now().In(loc).Format("2006-01-02 15:04:05.000")
 }
 
-func FailedResponse(ctx *gin.Context, statusCode int, fallback model.Message, err error, documentationURL ...string) model.WebResponse[any] {
+func FailedResponse(ctx *gin.Context, statusCode int, fallback model.Message, err error) model.WebResponse[any] {
 	if resolvedCode := GetHTTPStatusCode(err); resolvedCode != http.StatusOK {
 		statusCode = resolvedCode
 	}
@@ -65,12 +75,12 @@ func FailedResponse(ctx *gin.Context, statusCode int, fallback model.Message, er
 		Message:          msg,
 		RequestID:        getRequestID(ctx),
 		Timestamp:        getCurrentTimestamp(),
-		Path:             ctx.Request.URL.Path,
-		DocumentationURL: getDocumentationURL(documentationURL...),
+		Path:             ctx.FullPath(),
+		DocumentationURL: getDocumentationURL(ctx),
 	}
 }
 
-func SuccessResponse[T any](ctx *gin.Context, statusCode int, message model.Message, data T, documentationURL ...string) model.WebResponse[T] {
+func SuccessResponse[T any](ctx *gin.Context, statusCode int, message model.Message, data T) model.WebResponse[T] {
 	return model.WebResponse[T]{
 		Status:           "success",
 		StatusCode:       statusCode,
@@ -79,7 +89,7 @@ func SuccessResponse[T any](ctx *gin.Context, statusCode int, message model.Mess
 		RequestID:        getRequestID(ctx),
 		Timestamp:        getCurrentTimestamp(),
 		Path:             ctx.Request.URL.Path,
-		DocumentationURL: getDocumentationURL(documentationURL...),
+		DocumentationURL: getDocumentationURL(ctx),
 	}
 }
 
@@ -100,6 +110,6 @@ func SuccessWithPaginationResponse[T any](
 		RequestID:        getRequestID(ctx),
 		Timestamp:        getCurrentTimestamp(),
 		Path:             ctx.Request.URL.Path,
-		DocumentationURL: getDocumentationURL(documentationURL...),
+		DocumentationURL: getDocumentationURL(ctx),
 	}
 }
