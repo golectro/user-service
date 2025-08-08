@@ -50,4 +50,40 @@ var (
 		"en": "Failed to set default address",
 		"id": "Gagal mengatur alamat default",
 	}
+	FailedGeneateDEK = model.Message{
+		"en": "Failed to generate DEK",
+		"id": "Gagal membuat kunci enkripsi",
+	}
+	FailedEncryptLabel = model.Message{
+		"en": "Failed to encrypt label",
+		"id": "Gagal enkripsi label",
+	}
+	FailedEncryptRecipient = model.Message{
+		"en": "Failed to encrypt recipient",
+		"id": "Gagal enkripsi penerima",
+	}
+	FailedEncryptPhone = model.Message{
+		"en": "Failed to encrypt phone",
+		"id": "Gagal enkripsi telepon",
+	}
+	FailedEncryptAddressLine = model.Message{
+		"en": "Failed to encrypt address line",
+		"id": "Gagal enkripsi baris alamat",
+	}
+	FailedEncryptCity = model.Message{
+		"en": "Failed to encrypt city",
+		"id": "Gagal enkripsi kota",
+	}
+	FailedEncryptProvince = model.Message{
+		"en": "Failed to encrypt province",
+		"id": "Gagal enkripsi provinsi",
+	}
+	FailedEncryptPostalCode = model.Message{
+		"en": "Failed to encrypt postal code",
+		"id": "Gagal enkripsi kode pos",
+	}
+	FailedEncryptDEK = model.Message{
+		"en": "Failed to encrypt DEK",
+		"id": "Gagal enkripsi DEK",
+	}
 )

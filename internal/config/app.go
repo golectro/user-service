@@ -40,7 +40,8 @@ func Bootstrap(config *BootstrapConfig) {
 	minioRepository := repository.NewMinioRepository(config.Minio)
 
 	userUseCase := usecase.NewUserUsecase(config.DB, config.Log, config.Validate, userRepository)
-	addressUseCase := usecase.NewAddressUsecase(config.DB, config.Log, config.Validate, addressRepository)
+	encryptionUsecase := usecase.NewEncryptionUsecase(config.Vault, config.Viper)
+	addressUseCase := usecase.NewAddressUsecase(config.DB, config.Log, config.Validate, addressRepository, encryptionUsecase)
 	minioUseCase := usecase.NewMinioUsecase(minioRepository, config.Validate, config.Log)
 
 	userController := http.NewUserController(userUseCase, minioUseCase, config.Log, config.Viper)
