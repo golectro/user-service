@@ -8,7 +8,10 @@ service AddressService {
   rpc GetAddress (GetAddressRequest) returns (GetAddressResponse);
 }
 
-message GetAddressRequest {}
+message GetAddressRequest {
+  optional uint32 page = 1;
+  optional uint32 limit = 2;
+}
 
 message GetAddressResponse {
   repeated Address addresses = 1;

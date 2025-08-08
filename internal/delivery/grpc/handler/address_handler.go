@@ -15,13 +15,25 @@ type AddressHandler struct {
 	UseCase *usecase.AddressUseCase
 }
 
-func (s *AddressHandler) GetAddress(ctx context.Context, _ *proto.GetAddressRequest) (*proto.GetAddressResponse, error) {
+func (s *AddressHandler) GetAddress(ctx context.Context, req *proto.GetAddressRequest) (*proto.GetAddressResponse, error) {
 	auth := interceptor.GetUserFromContext(ctx)
 	if auth == nil {
 		return nil, status.Error(codes.Internal, "auth not found in context")
 	}
 
-	user, _, err := s.UseCase.GetAddressesByUserID(ctx, auth.ID, 0, 0)
+	page := int(req.GetPage())
+	if page <= 0 {
+		page = 1
+	}
+
+	limit := int(req.GetLimit())
+	if limit <= 0 {
+		limit = 10
+	}
+
+	offset := (page - 1) * limit
+
+	user, _, err := s.UseCase.GetAddressesByUserID(ctx, auth.ID, limit, offset)
 	if err != nil {
 		return nil, status.Error(codes.Internal, "failed to get user profile")
 	}

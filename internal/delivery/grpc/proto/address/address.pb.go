@@ -23,6 +23,8 @@ const (
 
 type GetAddressRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
+	Page          *uint32                `protobuf:"varint,1,opt,name=page,proto3,oneof" json:"page,omitempty"`
+	Limit         *uint32                `protobuf:"varint,2,opt,name=limit,proto3,oneof" json:"limit,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -55,6 +57,20 @@ func (x *GetAddressRequest) ProtoReflect() protoreflect.Message {
 // Deprecated: Use GetAddressRequest.ProtoReflect.Descriptor instead.
 func (*GetAddressRequest) Descriptor() ([]byte, []int) {
 	return file_address_proto_rawDescGZIP(), []int{0}
+}
+
+func (x *GetAddressRequest) GetPage() uint32 {
+	if x != nil && x.Page != nil {
+		return *x.Page
+	}
+	return 0
+}
+
+func (x *GetAddressRequest) GetLimit() uint32 {
+	if x != nil && x.Limit != nil {
+		return *x.Limit
+	}
+	return 0
 }
 
 type GetAddressResponse struct {
@@ -237,8 +253,12 @@ var File_address_proto protoreflect.FileDescriptor
 
 const file_address_proto_rawDesc = "" +
 	"\n" +
-	"\raddress.proto\x12\x04user\"\x13\n" +
-	"\x11GetAddressRequest\"A\n" +
+	"\raddress.proto\x12\x04user\"Z\n" +
+	"\x11GetAddressRequest\x12\x17\n" +
+	"\x04page\x18\x01 \x01(\rH\x00R\x04page\x88\x01\x01\x12\x19\n" +
+	"\x05limit\x18\x02 \x01(\rH\x01R\x05limit\x88\x01\x01B\a\n" +
+	"\x05_pageB\b\n" +
+	"\x06_limit\"A\n" +
 	"\x12GetAddressResponse\x12+\n" +
 	"\taddresses\x18\x01 \x03(\v2\r.user.AddressR\taddresses\"\xd2\x02\n" +
 	"\aAddress\x12\x0e\n" +
@@ -297,6 +317,7 @@ func file_address_proto_init() {
 	if File_address_proto != nil {
 		return
 	}
+	file_address_proto_msgTypes[0].OneofWrappers = []any{}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
