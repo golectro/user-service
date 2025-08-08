@@ -85,7 +85,7 @@ func (c *AddressController) CreateAddress(ctx *gin.Context) {
 		return
 	}
 
-	res := utils.SuccessResponse(ctx, http.StatusCreated, constants.AddressesRetrieved, result)
+	res := utils.SuccessResponse(ctx, http.StatusCreated, constants.AddressCreated, result)
 	ctx.JSON(res.StatusCode, res)
 
 }
