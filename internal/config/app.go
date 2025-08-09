@@ -41,12 +41,12 @@ func Bootstrap(config *BootstrapConfig) {
 	encryptionRepository := repository.NewEncryptionRepository(config.Log)
 
 	userUseCase := usecase.NewUserUsecase(config.DB, config.Log, config.Validate, userRepository)
-	encryptionUsecase := usecase.NewEncryptionUsecase(config.Vault, config.Viper)
+	encryptionUsecase := usecase.NewEncryptionUsecase(config.DB, config.Log, config.Vault, config.Viper, encryptionRepository)
 	addressUseCase := usecase.NewAddressUsecase(config.DB, config.Log, config.Validate, addressRepository, encryptionRepository, encryptionUsecase)
 	minioUseCase := usecase.NewMinioUsecase(minioRepository, config.Validate, config.Log)
 
 	userController := http.NewUserController(userUseCase, minioUseCase, config.Log, config.Viper)
-	addressController := http.NewAddressController(addressUseCase, config.Log)
+	addressController := http.NewAddressController(config.Log, addressUseCase, encryptionUsecase)
 
 	authMiddleware := middleware.NewAuth(userUseCase, config.Viper)
 

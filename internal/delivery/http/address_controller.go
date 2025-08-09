@@ -15,14 +15,16 @@ import (
 )
 
 type AddressController struct {
-	Log     *logrus.Logger
-	UseCase *usecase.AddressUseCase
+	Log               *logrus.Logger
+	AddressUseCase    *usecase.AddressUseCase
+	EncryptionUsecase *usecase.EncryptionUsecase
 }
 
-func NewAddressController(useCase *usecase.AddressUseCase, log *logrus.Logger) *AddressController {
+func NewAddressController(log *logrus.Logger, useCase *usecase.AddressUseCase, encryptionUsecase *usecase.EncryptionUsecase) *AddressController {
 	return &AddressController{
-		Log:     log,
-		UseCase: useCase,
+		Log:               log,
+		AddressUseCase:    useCase,
+		EncryptionUsecase: encryptionUsecase,
 	}
 }
 
@@ -44,7 +46,7 @@ func (c *AddressController) GetAddressByUserID(ctx *gin.Context) {
 
 	offset := (page - 1) * limit
 
-	addresses, total, err := c.UseCase.GetAddressesByUserID(ctx, auth.ID, limit, offset)
+	addresses, total, err := c.AddressUseCase.GetAddressesByUserID(ctx, auth.ID, limit, offset)
 	if err != nil {
 		c.Log.WithError(err).Error("Failed to get addresses")
 		res := utils.FailedResponse(ctx, http.StatusBadRequest, constants.FailedGetAddresses, err)
@@ -77,7 +79,7 @@ func (c *AddressController) CreateAddress(ctx *gin.Context) {
 		return
 	}
 
-	result, err := c.UseCase.CreateAddress(ctx, request, auth.ID)
+	result, err := c.AddressUseCase.CreateAddress(ctx, request, auth.ID)
 	if err != nil {
 		c.Log.WithError(err).Error("Failed to create address")
 		res := utils.FailedResponse(ctx, http.StatusBadRequest, constants.FailedGetAddresses, err)
@@ -116,7 +118,7 @@ func (c *AddressController) UpdateAddress(ctx *gin.Context) {
 		return
 	}
 
-	result, err := c.UseCase.UpdateAddress(ctx, request, addressId, auth.ID)
+	result, err := c.AddressUseCase.UpdateAddress(ctx, request, addressId, auth.ID)
 	if err != nil {
 		c.Log.WithError(err).Error("Failed to update address")
 		res := utils.FailedResponse(ctx, http.StatusBadRequest, constants.FailedUpdateAddress, err)
@@ -146,7 +148,7 @@ func (c *AddressController) SetDefaultAddress(ctx *gin.Context) {
 		return
 	}
 
-	if err := c.UseCase.SetDefaultAddress(ctx, addressId, auth.ID); err != nil {
+	if err := c.AddressUseCase.SetDefaultAddress(ctx, addressId, auth.ID); err != nil {
 		c.Log.WithError(err).Error("Failed to set default address")
 		res := utils.FailedResponse(ctx, http.StatusBadRequest, constants.FailedUpdateAddress, err)
 		ctx.AbortWithStatusJSON(res.StatusCode, res)
@@ -175,7 +177,7 @@ func (c *AddressController) DeleteAddress(ctx *gin.Context) {
 		return
 	}
 
-	if err := c.UseCase.DeleteAddress(ctx, addressId, auth.ID); err != nil {
+	if err := c.AddressUseCase.DeleteAddress(ctx, addressId, auth.ID); err != nil {
 		c.Log.WithError(err).Error("Failed to delete address")
 		res := utils.FailedResponse(ctx, http.StatusBadRequest, constants.FailedDeleteAddress, err)
 		ctx.AbortWithStatusJSON(res.StatusCode, res)
@@ -183,5 +185,43 @@ func (c *AddressController) DeleteAddress(ctx *gin.Context) {
 	}
 
 	res := utils.SuccessResponse(ctx, http.StatusOK, constants.AddressDeleted, true)
+	ctx.JSON(res.StatusCode, res)
+
+}
+
+func (c *AddressController) GetAddressEncryptionKey(ctx *gin.Context) {
+	auth := middleware.GetUser(ctx)
+
+	addressID := ctx.Param("addressID")
+	if addressID == "" {
+		c.Log.Error("Address ID is required")
+		res := utils.FailedResponse(ctx, http.StatusBadRequest, constants.InvalidRequestData, nil)
+		ctx.AbortWithStatusJSON(res.StatusCode, res)
+		return
+	}
+
+	addressId, err := utils.ParseUUID(addressID)
+	if err != nil {
+		c.Log.WithError(err).Error("Invalid address ID format")
+		res := utils.FailedResponse(ctx, http.StatusBadRequest, constants.InvalidRequestData, err)
+		ctx.AbortWithStatusJSON(res.StatusCode, res)
+		return
+	}
+
+	key, err := c.EncryptionUsecase.GetAddressEncryptionKey(ctx, auth.ID, addressId)
+	if err != nil {
+		c.Log.WithError(err).Error("Failed to get address encryption key")
+		res := utils.FailedResponse(ctx, http.StatusBadRequest, constants.FailedGeneateDEK, err)
+		ctx.AbortWithStatusJSON(res.StatusCode, res)
+		return
+	}
+
+	if key == nil {
+		res := utils.FailedResponse(ctx, http.StatusNotFound, constants.AddressNotFound, nil)
+		ctx.AbortWithStatusJSON(res.StatusCode, res)
+		return
+	}
+
+	res := utils.SuccessResponse(ctx, http.StatusOK, constants.AddressCreated, key)
 	ctx.JSON(res.StatusCode, res)
 }

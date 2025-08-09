@@ -1,26 +1,41 @@
 package usecase
 
 import (
+	"context"
 	"crypto/aes"
 	"crypto/cipher"
 	"crypto/rand"
 	"encoding/base64"
 	"fmt"
+	"golectro-user/internal/constants"
+	"golectro-user/internal/model"
+	"golectro-user/internal/model/converter"
+	"golectro-user/internal/repository"
+	"golectro-user/internal/utils"
 	"io"
 
+	"github.com/google/uuid"
 	vault "github.com/hashicorp/vault/api"
+	"github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
+	"gorm.io/gorm"
 )
 
 type EncryptionUsecase struct {
-	Client *vault.Client
-	Viper  *viper.Viper
+	DB                   *gorm.DB
+	Log                  *logrus.Logger
+	Client               *vault.Client
+	Viper                *viper.Viper
+	EncryptionRepository *repository.EncryptionRepository
 }
 
-func NewEncryptionUsecase(client *vault.Client, viper *viper.Viper) *EncryptionUsecase {
+func NewEncryptionUsecase(db *gorm.DB, log *logrus.Logger, client *vault.Client, viper *viper.Viper, encryptionRepository *repository.EncryptionRepository) *EncryptionUsecase {
 	return &EncryptionUsecase{
-		Client: client,
-		Viper:  viper,
+		DB:                   db,
+		Log:                  log,
+		Client:               client,
+		Viper:                viper,
+		EncryptionRepository: encryptionRepository,
 	}
 }
 
@@ -100,4 +115,21 @@ func (uc *EncryptionUsecase) DecryptAES_GCM(ciphertextWithNonce, key []byte) ([]
 		return nil, err
 	}
 	return plaintext, nil
+}
+
+func (uc *EncryptionUsecase) GetAddressEncryptionKey(ctx context.Context, userID, addressID uuid.UUID) (*model.AddressEncryptionKeyResponse, error) {
+	tx := uc.DB.WithContext(ctx)
+
+	keyEntity, err := uc.EncryptionRepository.FindByAddressIDAndUserID(tx, userID, addressID)
+	if err != nil {
+		uc.Log.WithError(err).Error("Failed to find encryption key by address ID")
+		return nil, utils.WrapMessageAsError(constants.FailedGetEncryptionKey, err)
+	}
+
+	if keyEntity == nil {
+		uc.Log.Error("Encryption key not found for address ID")
+		return nil, utils.WrapMessageAsError(constants.EncryptionKeyNotFound, nil)
+	}
+
+	return converter.EncryptionKeyToResponse(keyEntity), nil
 }

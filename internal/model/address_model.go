@@ -42,4 +42,12 @@ type (
 		PostalCode  string `json:"postal_code" validate:"omitempty,min=4,max=10"`
 		IsDefault   bool   `json:"is_default"`
 	}
+
+	AddressEncryptionKeyResponse struct {
+		ID        uuid.UUID `json:"id"`
+		AddressID uuid.UUID `json:"address_id"`
+		Key       string    `json:"key"`
+		CreatedAt time.Time `json:"created_at"`
+		UpdatedAt time.Time `json:"updated_at"`
+	}
 )

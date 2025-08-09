@@ -94,4 +94,8 @@ var (
 		"en": "Failed to decrypt DEK",
 		"id": "Gagal mendekripsi DEK",
 	}
+	EncryptionKeyNotFound = model.Message{
+		"en": "Encryption key not found for address ID",
+		"id": "Kunci enkripsi tidak ditemukan untuk ID alamat",
+	}
 )
