@@ -31,4 +31,15 @@ type (
 		CreatedAt   time.Time `json:"created_at"`
 		UpdatedAt   time.Time `json:"updated_at"`
 	}
+
+	EditUserAddressRequest struct {
+		Label       string `json:"label" validate:"omitempty,min=3,max=50"`
+		Recipient   string `json:"recipient" validate:"omitempty,min=3,max=100"`
+		Phone       string `json:"phone" validate:"omitempty,min=8,max=20"`
+		AddressLine string `json:"address_line" validate:"omitempty,min=5,max=255"`
+		City        string `json:"city" validate:"omitempty,min=3,max=100"`
+		Province    string `json:"province" validate:"omitempty,min=3,max=100"`
+		PostalCode  string `json:"postal_code" validate:"omitempty,min=4,max=10"`
+		IsDefault   bool   `json:"is_default"`
+	}
 )

@@ -100,7 +100,7 @@ func (c *AddressController) UpdateAddress(ctx *gin.Context) {
 		return
 	}
 
-	request := new(model.UserAddressRequest)
+	request := new(model.EditUserAddressRequest)
 	if err := ctx.ShouldBindJSON(request); err != nil {
 		c.Log.WithError(err).Error("Invalid request data")
 		res := utils.FailedResponse(ctx, http.StatusBadRequest, constants.InvalidRequestData, err)

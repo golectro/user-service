@@ -86,4 +86,12 @@ var (
 		"en": "Failed to encrypt DEK",
 		"id": "Gagal enkripsi DEK",
 	}
+	FailedGetEncryptionKey = model.Message{
+		"en": "Failed to get encryption key",
+		"id": "Gagal mendapatkan kunci enkripsi",
+	}
+	FailedDecryptDEK = model.Message{
+		"en": "Failed to decrypt DEK",
+		"id": "Gagal mendekripsi DEK",
+	}
 )
