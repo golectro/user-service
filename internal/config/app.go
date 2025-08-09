@@ -38,10 +38,11 @@ func Bootstrap(config *BootstrapConfig) {
 	userRepository := repository.NewUserRepository(config.Log)
 	addressRepository := repository.NewAddressRepository(config.Log)
 	minioRepository := repository.NewMinioRepository(config.Minio)
+	encryptionRepository := repository.NewEncryptionRepository(config.Log)
 
 	userUseCase := usecase.NewUserUsecase(config.DB, config.Log, config.Validate, userRepository)
 	encryptionUsecase := usecase.NewEncryptionUsecase(config.Vault, config.Viper)
-	addressUseCase := usecase.NewAddressUsecase(config.DB, config.Log, config.Validate, addressRepository, encryptionUsecase)
+	addressUseCase := usecase.NewAddressUsecase(config.DB, config.Log, config.Validate, addressRepository, encryptionRepository, encryptionUsecase)
 	minioUseCase := usecase.NewMinioUsecase(minioRepository, config.Validate, config.Log)
 
 	userController := http.NewUserController(userUseCase, minioUseCase, config.Log, config.Viper)

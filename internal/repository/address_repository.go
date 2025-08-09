@@ -26,13 +26,11 @@ func (r *AddressRepository) FindByUserID(db *gorm.DB, userID uuid.UUID, limit, o
 
 	query := db.Model(&entity.Address{}).Where("user_id = ?", userID)
 
-	// Hitung total
 	if err := query.Count(&total).Error; err != nil {
 		r.Log.WithError(err).Error("Failed to count addresses by user ID")
 		return nil, 0, err
 	}
 
-	// Ambil data paginated
 	err := query.Limit(limit).Offset(offset).Find(&addresses).Error
 	if err != nil {
 		r.Log.WithError(err).Error("Failed to find paginated addresses by user ID")

@@ -19,7 +19,7 @@ type Address struct {
 	PostalCode    string    `gorm:"type:text;not null;column:postal_code" json:"postal_code"`
 	IsDefault     bool      `gorm:"type:tinyint(1);default:0;check:is_default IN (0,1);column:is_default" json:"is_default"`
 	Encrypted     bool      `gorm:"type:tinyint(1);default:1;check:encrypted IN (0,1)" json:"encrypted"`
-	EncryptionKey string    `gorm:"type:text;column:encryption_key" json:"encryption_key,omitempty"`
+	EncryptionKey AddressEncryptionKey `gorm:"foreignKey:AddressID;constraint:OnDelete:CASCADE" json:"encryption_key,omitempty"`
 	CreatedAt     time.Time `gorm:"type:datetime;column:created_at;autoCreateTime:milli"`
 	UpdatedAt     time.Time `gorm:"type:datetime;column:updated_at;autoUpdateTime:milli"`
 }

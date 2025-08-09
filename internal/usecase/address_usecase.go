@@ -22,15 +22,17 @@ type AddressUseCase struct {
 	Log               *logrus.Logger
 	Validate          *validator.Validate
 	AddressRepository *repository.AddressRepository
+	EncryptionRepository *repository.EncryptionRepository
 	EncryptionUsecase *EncryptionUsecase
 }
 
-func NewAddressUsecase(db *gorm.DB, log *logrus.Logger, validate *validator.Validate, userRepository *repository.AddressRepository, encryptionUsecase *EncryptionUsecase) *AddressUseCase {
+func NewAddressUsecase(db *gorm.DB, log *logrus.Logger, validate *validator.Validate, userRepository *repository.AddressRepository, encryptionRepository *repository.EncryptionRepository, encryptionUsecase *EncryptionUsecase) *AddressUseCase {
 	return &AddressUseCase{
 		DB:                db,
 		Log:               log,
 		Validate:          validate,
 		AddressRepository: userRepository,
+		EncryptionRepository: encryptionRepository,
 		EncryptionUsecase: encryptionUsecase,
 	}
 }
@@ -112,8 +114,9 @@ func (uc *AddressUseCase) CreateAddress(ctx context.Context, request *model.User
 		return nil, utils.WrapMessageAsError(constants.FailedEncryptDEK, err)
 	}
 
+	addressID := uuid.New()
 	address := &entity.Address{
-		ID:            uuid.New(),
+		ID:            addressID,
 		UserID:        userID,
 		Label:         labelEncrypted,
 		Recipient:     recipientEncrypted,
@@ -123,11 +126,21 @@ func (uc *AddressUseCase) CreateAddress(ctx context.Context, request *model.User
 		Province:      provinceEncrypted,
 		PostalCode:    postalCodeEncrypted,
 		IsDefault:     request.IsDefault,
-		EncryptionKey: encryptedDEK,
 	}
 
 	if err := uc.AddressRepository.Create(tx, address); err != nil {
 		uc.Log.WithError(err).Error("Failed to create address")
+		return nil, utils.WrapMessageAsError(constants.FailedCreateAddress, err)
+	}
+
+	keyEntity := &entity.AddressEncryptionKey{
+		ID:        uuid.New(),
+		AddressID: addressID,
+		Key:       encryptedDEK,
+	}
+
+	if err := uc.EncryptionRepository.Create(tx, keyEntity); err != nil {
+		uc.Log.WithError(err).Error("Failed to create address encryption key")
 		return nil, utils.WrapMessageAsError(constants.FailedCreateAddress, err)
 	}
 
