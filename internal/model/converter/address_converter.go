@@ -45,3 +45,16 @@ func ToUserAddressResponse(address *entity.Address) *model.UserAddressResponse {
 		UpdatedAt:   address.UpdatedAt,
 	}
 }
+
+func EncryptionKeyToResponse(keyEntity *entity.AddressEncryptionKey) *model.AddressEncryptionKeyResponse {
+	if keyEntity == nil {
+		return nil
+	}
+	return &model.AddressEncryptionKeyResponse{
+		ID:        keyEntity.ID,
+		AddressID: keyEntity.AddressID,
+		Key:       keyEntity.Key,
+		CreatedAt: keyEntity.CreatedAt,
+		UpdatedAt: keyEntity.UpdatedAt,
+	}
+}

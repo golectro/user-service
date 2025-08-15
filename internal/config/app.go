@@ -7,9 +7,9 @@ import (
 	"golectro-user/internal/repository"
 	"golectro-user/internal/usecase"
 
-	"github.com/elastic/go-elasticsearch/v8"
 	"github.com/gin-gonic/gin"
 	"github.com/go-playground/validator/v10"
+	"github.com/hashicorp/vault/api"
 	"github.com/minio/minio-go/v7"
 	"github.com/redis/go-redis/v9"
 	"github.com/sirupsen/logrus"
@@ -28,21 +28,23 @@ type BootstrapConfig struct {
 	Validate   *validator.Validate
 	Viper      *viper.Viper
 	GRPCClient *grpc.ClientConn
-	Elastic    *elasticsearch.Client
 	Minio      *minio.Client
+	Vault      *api.Client
 }
 
 func Bootstrap(config *BootstrapConfig) {
 	userRepository := repository.NewUserRepository(config.Log)
 	addressRepository := repository.NewAddressRepository(config.Log)
 	minioRepository := repository.NewMinioRepository(config.Minio)
+	encryptionRepository := repository.NewEncryptionRepository(config.Log)
 
 	userUseCase := usecase.NewUserUsecase(config.DB, config.Log, config.Validate, userRepository)
-	addressUseCase := usecase.NewAddressUsecase(config.DB, config.Log, config.Validate, addressRepository)
+	encryptionUsecase := usecase.NewEncryptionUsecase(config.DB, config.Log, config.Vault, config.Viper, encryptionRepository)
+	addressUseCase := usecase.NewAddressUsecase(config.DB, config.Log, config.Validate, addressRepository, encryptionRepository, encryptionUsecase)
 	minioUseCase := usecase.NewMinioUsecase(minioRepository, config.Validate, config.Log)
 
 	userController := http.NewUserController(userUseCase, minioUseCase, config.Log, config.Viper)
-	addressController := http.NewAddressController(addressUseCase, config.Log)
+	addressController := http.NewAddressController(config.Log, addressUseCase, encryptionUsecase)
 
 	authMiddleware := middleware.NewAuth(userUseCase, config.Viper)
 

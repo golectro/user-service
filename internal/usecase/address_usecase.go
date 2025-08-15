@@ -2,6 +2,7 @@ package usecase
 
 import (
 	"context"
+	"encoding/base64"
 	"golectro-user/internal/constants"
 	"golectro-user/internal/entity"
 	"golectro-user/internal/model"
@@ -17,18 +18,22 @@ import (
 )
 
 type AddressUseCase struct {
-	DB                *gorm.DB
-	Log               *logrus.Logger
-	Validate          *validator.Validate
-	AddressRepository *repository.AddressRepository
+	DB                   *gorm.DB
+	Log                  *logrus.Logger
+	Validate             *validator.Validate
+	AddressRepository    *repository.AddressRepository
+	EncryptionRepository *repository.EncryptionRepository
+	EncryptionUsecase    *EncryptionUsecase
 }
 
-func NewAddressUsecase(db *gorm.DB, log *logrus.Logger, validate *validator.Validate, userRepository *repository.AddressRepository) *AddressUseCase {
+func NewAddressUsecase(db *gorm.DB, log *logrus.Logger, validate *validator.Validate, userRepository *repository.AddressRepository, encryptionRepository *repository.EncryptionRepository, encryptionUsecase *EncryptionUsecase) *AddressUseCase {
 	return &AddressUseCase{
-		DB:                db,
-		Log:               log,
-		Validate:          validate,
-		AddressRepository: userRepository,
+		DB:                   db,
+		Log:                  log,
+		Validate:             validate,
+		AddressRepository:    userRepository,
+		EncryptionRepository: encryptionRepository,
+		EncryptionUsecase:    encryptionUsecase,
 	}
 }
 
@@ -36,7 +41,7 @@ func (uc *AddressUseCase) GetAddressesByUserID(ctx context.Context, userID uuid.
 	address, total, err := uc.AddressRepository.FindByUserID(uc.DB.WithContext(ctx), userID, limit, offset)
 	if err != nil {
 		uc.Log.WithError(err).Error("Failed to find addresses by user ID")
-		return nil, 0, utils.WrapMessageAsError(constants.FailedGetAddresses, err)
+		return nil, 0, utils.WrapMessageAsError(constants.FailedGetAddresses)
 	}
 
 	if address == nil {
@@ -56,21 +61,86 @@ func (uc *AddressUseCase) CreateAddress(ctx context.Context, request *model.User
 		return nil, utils.WrapMessageAsError(message)
 	}
 
+	dek, err := uc.EncryptionUsecase.GenerateDEK()
+	if err != nil {
+		return nil, utils.WrapMessageAsError(constants.FailedGeneateDEK, err)
+	}
+
+	encrypt := func(plaintext string) (string, error) {
+		ciphertext, err := uc.EncryptionUsecase.EncryptAES_GCM([]byte(plaintext), dek)
+		if err != nil {
+			return "", err
+		}
+		return base64.StdEncoding.EncodeToString(ciphertext), nil
+	}
+
+	labelEncrypted, err := encrypt(request.Label)
+	if err != nil {
+		return nil, utils.WrapMessageAsError(constants.FailedEncryptLabel, err)
+	}
+
+	recipientEncrypted, err := encrypt(request.Recipient)
+	if err != nil {
+		return nil, utils.WrapMessageAsError(constants.FailedEncryptRecipient, err)
+	}
+
+	phoneEncrypted, err := encrypt(request.Phone)
+	if err != nil {
+		return nil, utils.WrapMessageAsError(constants.FailedEncryptPhone, err)
+	}
+
+	addressLineEncrypted, err := encrypt(request.AddressLine)
+	if err != nil {
+		return nil, utils.WrapMessageAsError(constants.FailedEncryptAddressLine, err)
+	}
+
+	cityEncrypted, err := encrypt(request.City)
+	if err != nil {
+		return nil, utils.WrapMessageAsError(constants.FailedEncryptCity, err)
+	}
+
+	provinceEncrypted, err := encrypt(request.Province)
+	if err != nil {
+		return nil, utils.WrapMessageAsError(constants.FailedEncryptProvince, err)
+	}
+
+	postalCodeEncrypted, err := encrypt(request.PostalCode)
+	if err != nil {
+		return nil, utils.WrapMessageAsError(constants.FailedEncryptPostalCode, err)
+	}
+
+	encryptedDEK, err := uc.EncryptionUsecase.EncryptDEK(dek)
+	if err != nil {
+		return nil, utils.WrapMessageAsError(constants.FailedEncryptDEK, err)
+	}
+
+	addressID := uuid.New()
 	address := &entity.Address{
-		ID:          uuid.New(),
+		ID:          addressID,
 		UserID:      userID,
-		Label:       request.Label,
-		Recipient:   request.Recipient,
-		Phone:       request.Phone,
-		AddressLine: request.AddressLine,
-		City:        request.City,
-		Province:    request.Province,
-		PostalCode:  request.PostalCode,
+		Label:       labelEncrypted,
+		Recipient:   recipientEncrypted,
+		Phone:       phoneEncrypted,
+		AddressLine: addressLineEncrypted,
+		City:        cityEncrypted,
+		Province:    provinceEncrypted,
+		PostalCode:  postalCodeEncrypted,
 		IsDefault:   request.IsDefault,
 	}
 
 	if err := uc.AddressRepository.Create(tx, address); err != nil {
 		uc.Log.WithError(err).Error("Failed to create address")
+		return nil, utils.WrapMessageAsError(constants.FailedCreateAddress, err)
+	}
+
+	keyEntity := &entity.AddressEncryptionKey{
+		ID:        uuid.New(),
+		AddressID: addressID,
+		Key:       encryptedDEK,
+	}
+
+	if err := uc.EncryptionRepository.Create(tx, keyEntity); err != nil {
+		uc.Log.WithError(err).Error("Failed to create address encryption key")
 		return nil, utils.WrapMessageAsError(constants.FailedCreateAddress, err)
 	}
 
@@ -82,7 +152,7 @@ func (uc *AddressUseCase) CreateAddress(ctx context.Context, request *model.User
 	return converter.ToUserAddressResponse(address), nil
 }
 
-func (uc *AddressUseCase) UpdateAddress(ctx context.Context, request *model.UserAddressRequest, addressID uuid.UUID, userID uuid.UUID) (*model.UserAddressResponse, error) {
+func (uc *AddressUseCase) UpdateAddress(ctx context.Context, request *model.EditUserAddressRequest, addressID uuid.UUID, userID uuid.UUID) (*model.UserAddressResponse, error) {
 	tx := uc.DB.WithContext(ctx).Begin()
 	defer tx.Rollback()
 
@@ -101,14 +171,74 @@ func (uc *AddressUseCase) UpdateAddress(ctx context.Context, request *model.User
 		return nil, utils.WrapMessageAsError(constants.AddressNotFound)
 	}
 
-	address.Label = request.Label
-	address.Recipient = request.Recipient
-	address.Phone = request.Phone
-	address.AddressLine = request.AddressLine
-	address.City = request.City
-	address.Province = request.Province
-	address.PostalCode = request.PostalCode
-	address.IsDefault = request.IsDefault
+	keyEntity, err := uc.EncryptionRepository.FindByAddressID(tx, addressID)
+	if err != nil {
+		uc.Log.WithError(err).Error("Failed to get address encryption key")
+		return nil, utils.WrapMessageAsError(constants.FailedGetEncryptionKey, err)
+	}
+
+	dek, err := uc.EncryptionUsecase.DecryptDEK(keyEntity.Key)
+	if err != nil {
+		return nil, utils.WrapMessageAsError(constants.FailedDecryptDEK, err)
+	}
+
+	encrypt := func(plaintext string) (string, error) {
+		ciphertext, err := uc.EncryptionUsecase.EncryptAES_GCM([]byte(plaintext), dek)
+		if err != nil {
+			return "", err
+		}
+		return base64.StdEncoding.EncodeToString(ciphertext), nil
+	}
+
+	if request.Label != "" {
+		val, err := encrypt(request.Label)
+		if err != nil {
+			return nil, utils.WrapMessageAsError(constants.FailedEncryptLabel, err)
+		}
+		address.Label = val
+	}
+	if request.Recipient != "" {
+		val, err := encrypt(request.Recipient)
+		if err != nil {
+			return nil, utils.WrapMessageAsError(constants.FailedEncryptRecipient, err)
+		}
+		address.Recipient = val
+	}
+	if request.Phone != "" {
+		val, err := encrypt(request.Phone)
+		if err != nil {
+			return nil, utils.WrapMessageAsError(constants.FailedEncryptPhone, err)
+		}
+		address.Phone = val
+	}
+	if request.AddressLine != "" {
+		val, err := encrypt(request.AddressLine)
+		if err != nil {
+			return nil, utils.WrapMessageAsError(constants.FailedEncryptAddressLine, err)
+		}
+		address.AddressLine = val
+	}
+	if request.City != "" {
+		val, err := encrypt(request.City)
+		if err != nil {
+			return nil, utils.WrapMessageAsError(constants.FailedEncryptCity, err)
+		}
+		address.City = val
+	}
+	if request.Province != "" {
+		val, err := encrypt(request.Province)
+		if err != nil {
+			return nil, utils.WrapMessageAsError(constants.FailedEncryptProvince, err)
+		}
+		address.Province = val
+	}
+	if request.PostalCode != "" {
+		val, err := encrypt(request.PostalCode)
+		if err != nil {
+			return nil, utils.WrapMessageAsError(constants.FailedEncryptPostalCode, err)
+		}
+		address.PostalCode = val
+	}
 
 	if err := uc.AddressRepository.Update(tx, address); err != nil {
 		uc.Log.WithError(err).Error("Failed to update address")

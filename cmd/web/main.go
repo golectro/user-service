@@ -13,9 +13,10 @@ func main() {
 	mongo := config.NewMongoDB(viper, log)
 	validate := config.NewValidator(viper)
 	redis := config.NewRedis(viper, log)
+	vault := config.NewVaultClient(viper, log)
 	app := config.NewGin(viper, log, mongo, redis)
 	minio := config.NewMinioClient(viper, log)
-	executor := command.NewCommandExecutor(db)
+	executor := command.NewCommandExecutor(viper, db)
 
 	config.Bootstrap(&config.BootstrapConfig{
 		Viper:    viper,
@@ -26,6 +27,7 @@ func main() {
 		App:      app,
 		Redis:    redis,
 		Minio:    minio,
+		Vault:    vault,
 	})
 
 	if !executor.Execute(log) {

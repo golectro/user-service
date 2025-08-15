@@ -11,7 +11,7 @@ func main() {
 	db := config.NewDatabase(viperConfig, log)
 	validate := config.NewValidator(viperConfig)
 
-	if !command.NewCommandExecutor(db).Execute(log) {
+	if !command.NewCommandExecutor(viperConfig, db).Execute(log) {
 		return
 	}
 

@@ -7,5 +7,5 @@ import (
 )
 
 func Migrate(db *gorm.DB) error {
-	return db.AutoMigrate(&entity.User{}, &entity.Address{})
+	return db.AutoMigrate(&entity.User{}, &entity.Address{}, &entity.AddressEncryptionKey{})
 }

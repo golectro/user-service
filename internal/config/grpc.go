@@ -11,7 +11,7 @@ import (
 )
 
 func StartGRPC(viper *viper.Viper, db *gorm.DB, validate *validator.Validate, log *logrus.Logger) {
-	addressUC := usecase.NewAddressUsecase(db, log, validate, nil)
+	addressUC := usecase.NewAddressUsecase(db, log, validate, nil, nil, nil)
 	port := viper.GetInt("GRPC_PORT")
 	grpc.StartGRPCServer(addressUC, port, viper)
 }

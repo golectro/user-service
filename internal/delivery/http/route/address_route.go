@@ -10,4 +10,6 @@ func (c *RouteConfig) RegisterAddressRoutes(rg *gin.RouterGroup) {
 	address.PUT("/:id", c.AuthMiddleware, c.AddressController.UpdateAddress)
 	address.PUT("/:id/set-default", c.AuthMiddleware, c.AddressController.SetDefaultAddress)
 	address.DELETE("/:id", c.AuthMiddleware, c.AddressController.DeleteAddress)
+
+	address.GET("/encryption-key/:addressID", c.AuthMiddleware, c.AddressController.GetAddressEncryptionKey)
 }
