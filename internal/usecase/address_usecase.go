@@ -41,7 +41,7 @@ func (uc *AddressUseCase) GetAddressesByUserID(ctx context.Context, userID uuid.
 	address, total, err := uc.AddressRepository.FindByUserID(uc.DB.WithContext(ctx), userID, limit, offset)
 	if err != nil {
 		uc.Log.WithError(err).Error("Failed to find addresses by user ID")
-		return nil, 0, utils.WrapMessageAsError(constants.FailedGetAddresses, err)
+		return nil, 0, utils.WrapMessageAsError(constants.FailedGetAddresses)
 	}
 
 	if address == nil {

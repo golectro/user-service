@@ -7,7 +7,6 @@ import (
 	"golectro-user/internal/repository"
 	"golectro-user/internal/usecase"
 
-	"github.com/elastic/go-elasticsearch/v8"
 	"github.com/gin-gonic/gin"
 	"github.com/go-playground/validator/v10"
 	"github.com/hashicorp/vault/api"
@@ -29,7 +28,6 @@ type BootstrapConfig struct {
 	Validate   *validator.Validate
 	Viper      *viper.Viper
 	GRPCClient *grpc.ClientConn
-	Elastic    *elasticsearch.Client
 	Minio      *minio.Client
 	Vault      *api.Client
 }

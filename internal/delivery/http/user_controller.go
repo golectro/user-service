@@ -65,7 +65,7 @@ func (uc *UserController) UploadAvatar(ctx *gin.Context) {
 	ctx.JSON(res.StatusCode, res)
 }
 
-func (uc *UserController) DownloadAvatar(ctx *gin.Context) {
+func (uc *UserController) GetAvatarURL(ctx *gin.Context) {
 	auth := middleware.GetUser(ctx)
 
 	result, err := uc.UserUseCase.FindUserByID(ctx, auth.ID)

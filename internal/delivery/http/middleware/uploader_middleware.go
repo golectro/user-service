@@ -96,7 +96,7 @@ func SingleFileUpload(minioClient *minio.Client, opts UploadOptions) gin.Handler
 			},
 		)
 		if err != nil {
-			res := utils.FailedResponse(c, http.StatusInternalServerError, constants.FailedUploadAvatar, nil)
+			res := utils.FailedResponse(c, http.StatusInternalServerError, constants.FailedUploadObject, nil)
 			c.AbortWithStatusJSON(res.StatusCode, res)
 			return
 		}
@@ -202,7 +202,7 @@ func MultipleFileUpload(minioClient *minio.Client, opts UploadOptions) gin.Handl
 			src.Close()
 
 			if err != nil {
-				res := utils.FailedResponse(c, http.StatusInternalServerError, constants.FailedUploadAvatar, nil)
+				res := utils.FailedResponse(c, http.StatusInternalServerError, constants.FailedUploadObject, nil)
 				c.AbortWithStatusJSON(res.StatusCode, res)
 				return
 			}
