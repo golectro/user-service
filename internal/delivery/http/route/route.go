@@ -19,10 +19,10 @@ type RouteConfig struct {
 }
 
 func (c *RouteConfig) Setup() {
-	api := c.App.Group("/api")
+	api := c.App.Group("/api/v1")
 
 	c.RegisterUserRoutes(api, c.Minio)
-	c.RegisterCommonRoutes(c.App)
 	c.RegisterAddressRoutes(api)
-	c.RegisterSwaggerRoutes(api)
+	c.RegisterSwaggerRoutes(c.App)
+	c.RegisterCommonRoutes(c.App)
 }
